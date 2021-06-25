@@ -63,9 +63,13 @@ function addRestMethods(router, singularize) {
         next()
     })
 
-    router.get('/:collection', function (req, res, next) {
+    router.get('/:collection/cmd', function (req, res, next) {
         var query = query2m(req.query, { ignore: 'envelope' })
+        
+        res.locals.json = {lol:"xxxx"};
+        next();
 
+        /*
         req.collection.count(query.criteria, function (e, count) {
             var links
             if (e) return next(e)
@@ -78,6 +82,7 @@ function addRestMethods(router, singularize) {
                 next()
             })
         })
+        */
     })
 
     router.post('/:collection', function (req, res, next) {
@@ -153,6 +158,23 @@ function addRestMethods(router, singularize) {
         req.collection.remove(req.idMatch, { single: true }, function (e, result) {
             if (e) return next(e)
             res.status(204).send(); // No Content
+        })
+    })
+    
+    router.get('/:collection', function (req, res, next) {
+        var query = query2m(req.query, { ignore: 'envelope' })
+
+        req.collection.count(query.criteria, function (e, count) {
+            var links
+            if (e) return next(e)
+            res.append('X-Total-Count', count)
+            links = query.links(fullUrl(req), count)
+            if (links) res.links(links)
+            req.collection.find(query.criteria, query.options).toArray(function (e, results) {
+                if (e) return next(e)
+                res.locals.json = results
+                next()
+            })
         })
     })
 
